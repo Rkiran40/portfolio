@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Ticket Booking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-image:url('https://www.shutterstock.com/image-vector/different-film-strip-frame-clapperboard-260nw-1348258034.jpg');
+			background-size:cover;
+			background-attachment:fixed;
+        }
+        header {
+            background-color:GREEn;
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+        .section {
+            display: none;
+            padding: 20px;
+        }
+        .active {
+            display: block;
+        }
+        .movie-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .movie-poster {
+            cursor: pointer;
+            margin: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 150px;
+            text-align: center;
+        }
+        .movie-poster img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .movie-poster h3 {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .trailer-section {
+            text-align: center;
+        }
+        .trailer-section iframe {
+            width: 80%;
+            height: 400px;
+            margin: 20px 0;
+        }
+        .book-now-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .seating-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            margin: auto;
+        }
+        .screen {
+            width: 80%;
+            height: 40px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .seats {
+            display: grid;
+            gap: 5px;
+            justify-content: center;
+            padding: 10px;
+        }
+        .seat {
+            width: 30px;
+            height: 30px;
+            background-color: lightgray;
+            border: 1px solid #000;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .seat.selected {
+            background-color: green;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .fare-summary {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .payment-form {
+            margin: 20px 0;
+        }
+        .payment-form input {
+            margin: 5px;
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+    <!-- Include jsPDF library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Include QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+</head>
+<body>
+    <header>Booking Blast</header>
+   
+    <!-- Movies Section -->
+    <div id="movies" class="section active">
+        <h2>Recently Released TFI Movies</h2>
+        <div class="movie-list" id="movieList">
+            <!-- Movie posters will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Trailer Section -->
+    <div id="trailer" class="section">
+        <div class="trailer-section">
+            <h2 id="trailerTitle"></h2>
+            <iframe id="trailerVideo" src="" frameborder="0" allowfullscreen></iframe>
+            <button class="book-now-button" onclick="showSection('seating')">Book Now</button>
+        </div>
+    </div>
+
+    <!-- Seating Section -->
+    <div id="seating" class="section">
+        <div class="seating-container">
+            
+            <div class="section-title">Recliner - ₹500 per seat</div>
+            <div class="seats" id="recliner"></div>
+            <div class="section-title">Gold - ₹400 per seat</div>
+            <div class="seats" id="gold"></div>
+            <div class="section-title">Silver - ₹300 per seat</div>
+            <div class="seats" id="silver"></div>
+            <div class="section-title">Platinum - ₹200 per seat</div>
+            <div class="seats" id="platinum"></div>
+			<h1> Look Here</h1>
+			<div class="screen">SCREEN</div>
+        </div>
+        <h1 style="color:white"><div class="fare-summary" id="fareSummary"></div></h1>
+        <button class="book-now-button" onclick="showSection('payment')">Proceed to Payment</button>
+    </div>
+
+    <!-- Payment Section -->
+    <div id="payment" class="section">
+        <h2>Payment Options</h2>
+        <div class="payment-form">
+            <input type="text" id="cardNumber" placeholder="Card Number" maxlength="16">
+            <input type="text" id="cardName" placeholder="Cardholder Name">
+            <input type="text" id="expiryDate" placeholder="MM/YY" maxlength="5">
+            <input type="text" id="cvv" placeholder="CVV" maxlength="3">
+        </div>
+        <div id="qrCode" style="margin: 20px;"></div> <!-- QR Code Container -->
+        <button class="book-now-button" onclick="processPayment()">Complete Booking</button>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        // Sample TFI Movies Data
+        const movies = [
+            { title: "Pushpa: The Rise", poster: "https://m.media-amazon.com/images/M/MV5BNWU1ZWFhNGQtZDhlZC00ZWFlLTlmNmEtN2VmYmZiN2Y5ZmQ2XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", trailer: "https://youtu.be/g3JUbgOHgdw?si=zKJjT3Uy7hUBKQp6" },
+            { title: "RRR", poster: "https://image.tmdb.org/t/p/original/kdO4JtO5DnIMyLymQv8C8Ol1CzA.jpg", trailer: "https://youtu.be/NgBoMJy386M?si=CMrjDK2DEqAFT2md" },
+            { title: "Baahubali 2", poster: "https://images-eu.ssl-images-amazon.com/images/I/51yVpybJY-L.jpg", trailer: "https://youtu.be/qD-6d8Wo3do?si=PBE3FX3Qg9AQVG69" },
+
+            { title: "Krish", poster: "https://i.pinimg.com/474x/f1/49/e8/f149e8e345a0ecfa69d00ee831043de9.jpg", trailer: "https://youtu.be/3qa3L9rTEG0?si=sQneIgyNvTZBWm53" },
+
+            { title: "BANGBANG", poster: "https://stat5.bollywoodhungama.in/wp-content/uploads/2016/03/84611268.jpg", trailer: "https://youtu.be/MGXQ8bE6lW4?si=mz-RVP96U_m9u9x0" },
+
+            { title: "DHOOM3", poster: "https://stat5.bollywoodhungama.in/wp-content/uploads/2016/05/74461428.jpg", trailer: "https://youtu.be/yeF_b8EQcK0?si=P2mnGcPX4_hcCH8D" },
+
+            { title: "Joe", poster: "https://static.toiimg.com/photo/105240252.cms", trailer: "https://youtu.be/Lndgz3axeu4?si=ia7F_qT3a8LhiCr3" },
+
+            { title: "lover", poster: "https://m.media-amazon.com/images/M/MV5BOGE2YjI4MmEtZDRkOC00MzYxLWEwMzktYWU2Yzg3MDcxMTkxXkEyXkFqcGc@._V1_.jpg", trailer: "https://youtu.be/y6iMGX11LeE?si=0Z95gtJjvqIK19oh" },
+
+            { title: "Qalb", poster: "https://images.filmibeat.com/img/220x275/popcorn/movie_posters/qalb-20240110101435-18969.jpg", trailer: "https://youtu.be/xBfb0F2Z7ig?si=YDSoamFrJ9wkJ2Q7" },
+
+            { title: "SHIDDAT", poster: "https://upload.wikimedia.org/wikipedia/en/5/5e/Shiddat_poster.jpg", trailer: "https://youtu.be/x60tMH7Pz9s?si=UWnIlkjGqQl3w4ZZ" },
+
+            { title: "Ae Dil hai mushkil", poster: "https://static.toiimg.com/thumb/imgsize-123456,msid-107251972,width-200,resizemode-4/107251972.jpg", trailer: "https://youtu.be/Z_PODraXg4E?si=qxw3-klgYvubC6YH" },
+
+
+            { title: "KABIR SINGH", poster: "https://m.media-amazon.com/images/M/MV5BOTQyOWNhOTktODlmNy00NDVkLWE4MTAtYjZlMTg5MzA4ZWY0XkEyXkFqcGc@._V1_.jpg", trailer: "https://youtu.be/RiANSSgCuJk?si=Ed4xI2uFbllDr4O4" },
+
+            { title: "MS DHONI", poster: "https://m.media-amazon.com/images/M/MV5BM2UwZTNkMmItYmYzOS00MTk3LTg3NDgtNzg5ZjYxNTIzNzY4XkEyXkFqcGc@._V1_.jpg", trailer: "https://youtu.be/SiZbhos1LPA?si=HAmyK9x1nkjyuD4N" },
+
+            { title: "Shaitaan", poster: "https://m.media-amazon.com/images/M/MV5BOGI3YTcwNTgtMmY5Ny00M2Y0LWFjOWUtYjhkMzNjMjhmYjVkXkEyXkFqcGc@._V1_.jpg", trailer: "https://youtu.be/A_HQdwRDRrw?si=YO-2_YY1VJr1K_1Q" },
+
+            { title: "Hanuman", poster: "https://images.filmibeat.com/ph-big/2022/11/hanuman-2023_166902346040.jpg", trailer: "https://youtu.be/Oqvly3MvlXA?si=qZs1oRBmaaRa2xrH" },
+
+            { title: "Love Story", poster: "https://content.tupaki.com/twdata/2021/0921/news/Can-Love-Story-Hit-Top-Gear-Again--1632985729-146.jpg", trailer: "https://youtu.be/1yH_eOxpkwo?si=QF5J1Rs6MeTIrKPH" },
+
+
+            { title: "Shyam Singha Roy", poster: "https://upload.wikimedia.org/wikipedia/en/f/f0/Shyam_singa_roy_poster.jpg", trailer: "https://youtu.be/QliDRYaknmI?si=ILmSkzZlQGZXKW1y" },
+
+            { title: "Avengers", poster: "https://m.media-amazon.com/images/M/MV5BNGE0YTVjNzUtNzJjOS00NGNlLTgxMzctZTY4YTE1Y2Y1ZTU4XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", trailer: "https://youtu.be/6ZfuNTqbHE8?si=XajQwyJks0EUZk8O" },
+
+            { title: "Titanic", poster: "https://m.media-amazon.com/images/M/MV5BYzYyN2FiZmUtYWYzMy00MzViLWJkZTMtOGY1ZjgzNWMwN2YxXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", trailer: "https://youtu.be/kVrqfYjkTdQ?si=jQKAZhz8EGaBXIp6" },
+
+            { title: "Avatar", poster: "https://m.media-amazon.com/images/M/MV5BNmQxNjZlZTctMWJiMC00NGMxLWJjNTctNTFiNjA1Njk3ZDQ5XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", trailer: "https://youtu.be/d9MyW72ELq0?si=r6iMdXdWODofZbrl" }
+        ];
+
+        // Prices for different seating categories
+        const prices = {
+            recliner: 500,
+            gold: 400,
+            silver: 300,
+            platinum: 200
+        };
+
+        // Function to show a specific section
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        // Function to load movies
+        function loadMovies() {
+            const movieList = document.getElementById('movieList');
+            movies.forEach(movie => {
+                const movieDiv = document.createElement('div');
+                movieDiv.classList.add('movie-poster');
+                movieDiv.innerHTML = `
+                    <img src="${movie.poster}" alt="${movie.title}">
+                    <h3>${movie.title}</h3>
+                `;
+                movieDiv.addEventListener('click', () => showTrailer(movie));
+                movieList.appendChild(movieDiv);
+            });
+        }
+
+        // Function to show trailer
+        function showTrailer(movie) {
+            document.getElementById('trailerTitle').innerText = movie.title;
+            document.getElementById('trailerVideo').src = movie.trailer;
+            showSection('trailer');
+        }
+
+        // Initialize seating arrangements
+        function createSeats(sectionId, rows, cols) {
+            const section = document.getElementById(sectionId);
+            section.style.gridTemplateColumns = `repeat(${cols}, 30px)`;
+            section.style.gridTemplateRows = `repeat(${rows}, 30px)`;
+            for (let i = 0; i < rows * cols; i++) {
+                let seat = document.createElement("div");
+                seat.classList.add("seat");
+                seat.addEventListener("click", function() {
+                    seat.classList.toggle("selected");
+                    calculateFare();
+                });
+                section.appendChild(seat);
+            }
+        }
+
+        // Function to calculate the total fare
+        function calculateFare() {
+            let totalFare = 0;
+            const sections = ['recliner', 'gold', 'silver', 'platinum'];
+            sections.forEach(section => {
+                const selectedSeats = document.querySelectorAll(`#${section} .seat.selected`).length;
+                totalFare += selectedSeats * prices[section];
+            });
+
+            // Calculate GST
+            const gst = totalFare * 0.12; // 12% GST
+            let discount = 0;
+
+            // Apply discount if total fare is greater than or equal to ₹500
+            if (totalFare >= 500) {
+                discount = totalFare * 0.10; // 10% discount
+            }
+
+            // Calculate final amount
+            const finalAmount = totalFare + gst - discount;
+
+            // Update the fare summary
+            document.getElementById('fareSummary').innerText = `Total Fare: ₹${totalFare.toFixed(2)}\nGST (12%): ₹${gst.toFixed(2)}\nDiscount (10%): -₹${discount.toFixed(2)}\nFinal Amount: ₹${finalAmount.toFixed(2)}`;
+
+            // Generate QR Code for the final amount
+            generateQRCode(finalAmount);
+        }
+
+        // Function to generate QR Code
+        function generateQRCode(amount) {
+            $('#qrCode').empty(); // Clear previous QR code
+            const upiId = "63096169@ybl";
+            const qrData = `upi://pay?pa=${upiId}&am=${amount.toFixed(2)}&cu=INR&tn=Movie%20Ticket%20Payment`;
+            $('#qrCode').qrcode({
+                text: qrData,
+                width: 256, // Increased size for better scanning
+                height: 256 // Increased size for better scanning
+            });
+        }
+
+        // Function to process payment
+        function processPayment() {
+            const cardNumber = document.getElementById('cardNumber').value;
+            const cardName = document.getElementById('cardName').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            const cvv = document.getElementById('cvv').value;
+
+            // Simple validation (you can enhance this)
+            if (!cardNumber || !cardName || !expiryDate || !cvv) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            // Here you would typically send the payment information to your server
+            alert("Payment processed successfully!");
+
+            // Generate PDF after successful payment
+            generatePDF();
+        }
+
+        // Function to generate PDF for the booked tickets
+        function generatePDF() {
+            const doc = new jsPDF();
+            doc.setFontSize(22);
+            doc.text("Movie Ticket Booking Confirmation", 10, 20);
+            doc.setFontSize(16);
+            doc.text("Movie: Sample Movie", 10, 40);
+            doc.setFontSize(14);
+            let yOffset = 60;
+            const sections = ['recliner', 'gold', 'silver', 'platinum'];
+            sections.forEach(section => {
+                const selectedSeats = document.querySelectorAll(`#${section} .seat.selected`).length;
+                if (selectedSeats > 0) {
+                    doc.text(`${section.toUpperCase()} Seats: ${selectedSeats} x ₹${prices[section]} = ₹${selectedSeats * prices[section]}`, 10, yOffset);
+                    yOffset += 10;
+                }
+            });
+            doc.setFontSize(16);
+            doc.text(`Total Fare: ₹${document.getElementById('fareSummary').innerText.split('₹')[1]}`, 10, yOffset + 10);
+            doc.save("Movie_Ticket_Booking_Confirmation.pdf");
+        }
+
+        // Load movies on page load
+        loadMovies();
+        createSeats("recliner", 2, 20);
+        createSeats("gold", 9, 20);
+        createSeats("silver", 15, 15);
+        createSeats("platinum", 5, 25);
+    </script>
+</body>
+</html>
